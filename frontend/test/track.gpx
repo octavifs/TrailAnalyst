@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="Wikiloc - http://www.wikiloc.com" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+  <trk>
+    <name>Blanes-Tordera-Vallmanya-M.de Deu de Erola-Hortsavinya-Santa. Maria de Montnegre-Blanes</name>
+    <cmt>Descripció curta que poso aquí pel test.</cmt>
+    <desc>Descripció curta que poso aquí pel test.</desc>
+    <trkseg>
+      <trkpt lat="41.662514" lon="2.774907">
+        <ele>-2.3</ele>
+        <time>2012-08-19T04:47:03Z</time>
+      </trkpt>
+      <trkpt lat="41.662544" lon="2.775780">
+        <ele>-1.8</ele>
+        <time>2012-08-19T04:47:19Z</time>
+      </trkpt>
+      <trkpt lat="41.662674" lon="2.774747">
+        <ele>-1.3</ele>
+        <time>2012-08-19T04:47:25Z</time>
+      </trkpt>
+      <trkpt lat="41.662754" lon="2.774644">
+        <ele>-1.3</ele>
+        <time>2012-08-19T04:47:32Z</time>
+      </trkpt>
+      <trkpt lat="41.662766" lon="2.774631">
+        <ele>-1.3</ele>
+        <time>2012-08-19T04:47:40Z</time>
+      </trkpt>
+      <trkpt lat="41.662907" lon="2.774492">
+        <ele>-1.3</ele>
+        <time>2012-08-19T04:47:47Z</time>
+      </trkpt>
+    </trkseg>
+  </trk></gpx>

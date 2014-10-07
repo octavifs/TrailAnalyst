@@ -1,0 +1,27 @@
+0 info it worked if it ends with ok
+1 verbose cli [ 'node', '/usr/local/bin/npm', 'run-script', 'browserify' ]
+2 info using npm@1.4.16
+3 info using node@v0.10.29
+4 verbose node symlink /usr/local/bin/node
+5 verbose run-script [ 'prebrowserify', 'browserify', 'postbrowserify' ]
+6 info prebrowserify trailanalyst-frontend@0.0.0
+7 info browserify trailanalyst-frontend@0.0.0
+8 verbose unsafe-perm in lifecycle true
+9 info trailanalyst-frontend@0.0.0 Failed to exec browserify script
+10 error trailanalyst-frontend@0.0.0 browserify: `node_modules/grunt-cli/bin/grunt browserify`
+10 error Exit status 6
+11 error Failed at the trailanalyst-frontend@0.0.0 browserify script.
+11 error This is most likely a problem with the trailanalyst-frontend package,
+11 error not with npm itself.
+11 error Tell the author that this fails on your system:
+11 error     node_modules/grunt-cli/bin/grunt browserify
+11 error You can get their info via:
+11 error     npm owner ls trailanalyst-frontend
+11 error There is likely additional logging output above.
+12 error System Darwin 13.4.0
+13 error command "node" "/usr/local/bin/npm" "run-script" "browserify"
+14 error cwd /Users/octavi/projects/trailanalyst/frontend
+15 error node -v v0.10.29
+16 error npm -v 1.4.16
+17 error code ELIFECYCLE
+18 verbose exit [ 1, true ]
