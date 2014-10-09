@@ -56,6 +56,8 @@ exports.Track = function(gpxXML, name, description, trackpoints) {
     description: description,
     // trackpoints is supposed to be a private member, a la python (not enforced, recommended)
     trackpoints: trackpoints,
+    // This will store results
+    _memoizer: {},
     // Track instantaneous accessors
     time: function(idx) {
       return self.trackpoints[idx].time;
@@ -234,6 +236,24 @@ exports.Track = function(gpxXML, name, description, trackpoints) {
     }
     self.trackpoints[idx].ele = normalizedElevation / filterWindow;
   }
+  // Memoize stats functions calls
+  _.forEach(self, function(property, key) {
+    var memoizer = function() {
+      self._memoizer[key] = self._memoizer[key] || {};
+      var result = self._memoizer[key][arguments[0]]
+      if (result !== undefined) {
+        return result;
+      } else {
+        result = property.apply(null, arguments);
+        self._memoizer[key][arguments[0]] = result;
+        return result;
+      }
+    }
+    if (!_.isFunction(property) || key === 'slice' || key === 'nearest') {
+      return;
+    }
+    self[key] = memoizer;
+  });
   // return the public object
   return self;
 };
