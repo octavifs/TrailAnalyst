@@ -2,13 +2,24 @@
 var React = require('react');
 React.addons = require('react-addons');
 
-
 exports.Map = React.createClass({
   getInitialState: function() {
     return {
       map: null,
       trackPolylines: []
     };
+  },
+  scaleColor: function(value) {
+    // Transforms a radius [arcmin, arcmax] into a color [colormin, colormax]
+    // This interpolation is done in reverse fashion as to how d3 would usually do it. That is,
+    // it interpolates the longest path between colors.
+    var colorMin = "hsl(240, 50%, 50%)";
+    var colorMax = "hsl(360, 50%, 50%)";
+    return d3.interpolateHsl(colorMin, colorMax)(
+      d3.scale.linear()
+        .domain([this.props.track.minElevation(), this.props.track.maxElevation()])
+        .range([0, -2])(value)
+    );
   },
   componentDidMount: function() {
     var map = new google.maps.Map(this.getDOMNode());
@@ -69,7 +80,7 @@ exports.Map = React.createClass({
       segments.forEach(function(segment, idx) {
         var trackPolyline = new google.maps.Polyline({
           path: segment,
-          strokeColor: '#00FFFF',
+          strokeColor: this.scaleColor(this.props.track.elevation(idx + 1)),
           strokeOpacity: 0.8,
           strokeWeight: 6,
           map: this.state.map
