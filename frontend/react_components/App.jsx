@@ -17,6 +17,7 @@ var App = React.createClass({
     return {
       ondrag: false,
       track: null,
+      currentIndex: 0,
     };
   },
   onDragOverHandler: function(e) {
@@ -50,10 +51,13 @@ var App = React.createClass({
     // prepare handler for when reading has finished
     reader.onload = function(e) {
       this.setState({track: Track(e.target.result)});
-      console.log(this.state.track);
     }.bind(this)
     // start reading file in async task
     reader.readAsText(file);
+  },
+  onTrackHandler: function(idx) {
+    // Trigger this when hovering over track polyline
+    this.setState({currentIndex: idx});
   },
   render: function() {
     var style = {
@@ -62,15 +66,14 @@ var App = React.createClass({
     var ondragOverlayClasses = React.addons.classSet({
       hide: !this.state.ondrag
     });
-    console.log(ondragOverlayClasses);
 
     return (
       <div onDragOver={this.onDragOverHandler} onDragEnter={this.onDragEnterHandler} onDragLeave={this.onDragEndHandler} onDrop={this.onDropHandler}>
         <Navbar/>
         <div id="content">
-          <Map track={this.state.track}/>
-          <Stats track={this.state.track}/>
-          <Plot track={this.state.track}/>
+          <Map track={this.state.track} onTrack={this.onTrackHandler}/>
+          <Stats track={this.state.track} currentIndex={this.state.currentIndex}/>
+          <Plot track={this.state.track} currentIndex={this.state.currentIndex}/>
         </div>
       </div>
     );

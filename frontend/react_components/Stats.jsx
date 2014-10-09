@@ -107,7 +107,7 @@ var Gauge = React.createClass({
         .duration(transitionDuration)
         .call(arcTween, this.scaleArc(this.props.current));
       // Text does not need an animated transition. Simply change the value by the new one.
-      this.gaugeText.text(this.props.current + ' ' + this.props.unit);
+      this.gaugeText.text(numeral(this.props.current).format('0') + ' ' + this.props.unit);
     } catch(e) {
       // If any other error than the specified is thrown, reraise exception
       if (e.message !== "Invariant Violation: getDOMNode(): A component must be mounted to have a DOM node.") {
@@ -131,18 +131,14 @@ exports.Stats = React.createClass({
       current: 25
     };
   },
-  handleChange: function(event) {
-    this.setState({current: +event.target.value});
-  },
   render: function() {
     if (this.props.track === null) {
       return (
         <div id="stats" className={this.state.show ? '': 'hide'}>
-          <Gauge min={0} max={50} current={this.state.current} unit={'km/h'}/>
-          <input type="text" value={this.state.current} onChange={this.handleChange}/>
         </div>
       );
     }
+    // Global measurements
     var distance = numeral(this.props.track.distance() / 1000).format('0.00') + 'km'
     var totalTime = numeral(this.props.track.totalTime() / 1000).format('00:00:00') + ' h'
     var movingTime = numeral(this.props.track.movingTime() / 1000).format('00:00:00') + ' h'
@@ -153,8 +149,15 @@ exports.Stats = React.createClass({
     var negativeElevation = numeral(this.props.track.negativeElevation()).format('0') + ' m'
     var maxElevation = numeral(this.props.track.maxElevation()).format('0') + ' m'
     var minElevation = numeral(this.props.track.minElevation()).format('0') + ' m'
+    // Instantaneous measurements
+    var currentIndex = this.props.currentIndex;
+    var speed = this.props.track.speed(currentIndex);
+    var elevation = this.props.track.elevation(currentIndex);
+    console.log(minElevation, maxElevation, elevation);
     return (
       <div id="stats" className={this.state.show ? '': 'hide'}>
+        <Gauge min={0} max={this.props.track.maxSpeed()} current={speed} unit={'km/h'}/>
+        <Gauge min={this.props.track.minElevation()} max={this.props.track.maxElevation()} current={elevation} unit={'m'}/>
         <ul>
           <li>Distance: {distance}</li>
           <li>Total time: {totalTime}</li>
@@ -164,6 +167,8 @@ exports.Stats = React.createClass({
           <li>Negative elevation: {negativeElevation}</li>
           <li>Max elevation: {maxElevation}</li>
           <li>Min elevation: {minElevation}</li>
+          <li>Max speed: {maxSpeed}</li>
+          <li>Avg speed: {avgSpeed}</li>
         </ul>
       </div>
     );

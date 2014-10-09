@@ -7,7 +7,7 @@ exports.Map = React.createClass({
   getInitialState: function() {
     return {
       map: null,
-      trackPolyline: null
+      trackPolylines: []
     };
   },
   componentDidMount: function() {
@@ -54,22 +54,34 @@ exports.Map = React.createClass({
   },
   render: function() {
     // If we were displaying a track, remove it
-    if (this.state.trackPolyline !== null) {
-      this.state.trackPolyline.setMap(null);
-    }
+    this.state.trackPolylines.forEach(function(polyline) {
+      polyline.setMap(null);
+    });
+    this.state.trackPolylines = [];
     // If a new track is available, display it
     if (this.props.track !== null) {
       var trackCoords = this.props.track.trackpoints.map(function(trackpoint) {
         return new google.maps.LatLng(trackpoint.lat, trackpoint.lon);
       });
-      var trackPolyline = new google.maps.Polyline({
-        path: trackCoords,
-        strokeColor: '#00FFFF',
-        strokeOpacity: 0.8,
-        strokeWeight: 4,
-        map: this.state.map
+      var segments = trackCoords.slice(1).map(function(coords, idx) {
+        return [trackCoords[idx], coords];
       });
-      this.state.trackPolyline = trackPolyline;
+      segments.forEach(function(segment, idx) {
+        var trackPolyline = new google.maps.Polyline({
+          path: segment,
+          strokeColor: '#00FFFF',
+          strokeOpacity: 0.8,
+          strokeWeight: 6,
+          map: this.state.map
+        });
+        google.maps.event.addListener(
+          trackPolyline,
+          'mouseover',
+          this.props.onTrack.bind(null, idx + 1)
+        );
+        this.state.trackPolylines.push(trackPolyline);
+      }.bind(this));
+
       // set map bounds
       var bounds = this.props.track.bounds();
       var sw = new google.maps.LatLng(bounds.south, bounds.west);
