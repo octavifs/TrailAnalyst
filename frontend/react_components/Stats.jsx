@@ -12,8 +12,8 @@ var Gauge = React.createClass({
   // unit -> unit value
   // hsl max (red) -> hsl(360, 50%, 50%)
   // hsl min (blue) -> hsl(240, 50%, 50%)
-  width: 125,
-  height: 125,
+  width: 110,
+  height: 80,
   transitionDuration: 750,
   scaleArc: function(value) {
     // Transforms value in the range [props.min, props.max] into radians [arcmin, arcmax]
@@ -45,7 +45,7 @@ var Gauge = React.createClass({
         .attr("height", this.height)
       // Create extra centered element. This will hold the arc and text in place.
       .append("g")
-        .attr("transform", "translate(" + this.width / 2 + "," + this.height / 2 + ")");
+        .attr("transform", "translate(" + this.width / 2 + "," + this.height * 2/3 + ")");
     // Define the arc start and radius. endAngle will be defined in each arc datum
     var arc = d3.svg.arc()
       .innerRadius(30)
