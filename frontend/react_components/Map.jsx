@@ -15,9 +15,17 @@ exports.Map = React.createClass({
     // it interpolates the longest path between colors.
     var colorMin = "hsl(240, 50%, 50%)";
     var colorMax = "hsl(360, 50%, 50%)";
+    var min, max;
+    if (this.props.metric === 'elevation') {
+      min = this.props.track.minElevation();
+      max = this.props.track.maxElevation();
+    } else {
+      min = 0;
+      max = this.props.track.maxSpeed();
+    }
     return d3.interpolateHsl(colorMin, colorMax)(
       d3.scale.linear()
-        .domain([this.props.track.minElevation(), this.props.track.maxElevation()])
+        .domain([min, max])
         .range([0, -2])(value)
     );
   },
@@ -80,7 +88,7 @@ exports.Map = React.createClass({
       segments.forEach(function(segment, idx) {
         var trackPolyline = new google.maps.Polyline({
           path: segment,
-          strokeColor: this.scaleColor(this.props.track.elevation(idx + 1)),
+          strokeColor: this.scaleColor(this.props.track[this.props.metric](idx + 1)),
           strokeOpacity: 0.8,
           strokeWeight: 6,
           map: this.state.map
