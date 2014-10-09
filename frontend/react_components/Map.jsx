@@ -6,7 +6,8 @@ exports.Map = React.createClass({
   getInitialState: function() {
     return {
       map: null,
-      trackPolylines: []
+      trackPolylines: [],
+      track: null,
     };
   },
   scaleColor: function(value) {
@@ -72,13 +73,16 @@ exports.Map = React.createClass({
     this.setState({map: map});
   },
   render: function() {
-    // If we were displaying a track, remove it
-    this.state.trackPolylines.forEach(function(polyline) {
-      polyline.setMap(null);
-    });
-    this.state.trackPolylines = [];
     // If a new track is available, display it
-    if (this.props.track !== null) {
+    if (this.props.track !== this.state.track) {
+      // Brute force update of track state. No rerender
+      this.state.track = this.props.track;
+      // If we were displaying a track, remove it
+      this.state.trackPolylines.forEach(function(polyline) {
+        polyline.setMap(null);
+      });
+      this.state.trackPolylines = [];
+      // Redraw polylines
       var trackCoords = this.props.track.trackpoints.map(function(trackpoint) {
         return new google.maps.LatLng(trackpoint.lat, trackpoint.lon);
       });
