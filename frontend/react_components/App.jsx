@@ -8,13 +8,15 @@ var DefaultRoute = Router.DefaultRoute;
 var Track = require('../track.js').Track;
 
 var Map = require('./Map.jsx').Map;
+var Stats = require('./Stats.jsx').Stats;
+var Plot = require('./Plot.jsx').Plot;
 var Navbar = require('./Navbar.jsx').Navbar;
 
 var App = React.createClass({
   getInitialState: function() {
     return {
       ondrag: false,
-      track: null
+      track: null,
     };
   },
   onDragOverHandler: function(e) {
@@ -66,10 +68,9 @@ var App = React.createClass({
       <div onDragOver={this.onDragOverHandler} onDragEnter={this.onDragEnterHandler} onDragLeave={this.onDragEndHandler} onDrop={this.onDropHandler}>
         <Navbar/>
         <div id="content">
-          // <div id="ondragOverlay" className={ondragOverlayClasses}>
-          //   <p> Drop your GPX track here, motherfucker! </p>
-          // </div>
           <Map track={this.state.track}/>
+          <Stats track={this.state.track}/>
+          <Plot track={this.state.track}/>
         </div>
       </div>
     );
