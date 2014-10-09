@@ -1,0 +1,112 @@
+body {
+  padding-top: 50px;
+}
+.row {
+  margin: 10px 0px;
+}
+.navbar-header, .navbar-nav {
+    float: left !important;
+    margin: 0 !important;
+}
+ul.navbar-nav li a {
+    padding: 15px !important;
+    border-radius: 0;
+}
+ul.navbar-nav li a:hover {
+    background-color: #333 !important;
+}
+.controls a {
+    margin: 0 5px;
+}
+.console {
+    position: fixed;
+    top: 52px;
+    bottom: 50px;
+    left: 10%;
+    right: 10%;
+    background-color: #080808;
+    border: 5px solid #333;
+    border-bottom-right-radius: 5px;
+    border-bottom-left-radius: 5px;
+    border-top: none;
+    z-index: 1050;
+    padding: 10px;
+}
+.console pre {
+    margin: 0;
+    height: 100%;
+    color: #fff;
+    background-color: transparent;
+    border: none;
+}
+
+.console pre span.cmd-open, .console pre span.cmd-close {
+    color: cyan;
+}
+.console pre span.stdout {
+    color: white;
+}
+.console pre span.stderr {
+    color: red;
+}
+
+/* Spinner animation */
+@-moz-keyframes spin { 100% { -moz-transform: rotate(360deg);  }  }
+@-webkit-keyframes spin { 100% { -webkit-transform: rotate(360deg);  }  }
+@keyframes spin { 100% { -webkit-transform: rotate(360deg); transform:rotate(360deg);  }  }
+
+.spinner {
+    -webkit-animation:spin 2s linear infinite;
+    -moz-animation:spin 2s linear infinite;
+    animation:spin 2s linear infinite;
+}
+
+div#content, div#ondragOverlay {
+  position: fixed;
+  top: 51px;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+div#ondragOverlay {
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 100;
+  border: 10px dashed white;
+  text-align: center;
+  padding-top: 20%;
+  font: 40px Georgia small-caps;
+  color: white;
+}
+
+div#map-canvas {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+div#plot {
+  height: 200px;
+  width: 700px;
+  position: fixed;
+  bottom: 20px;
+  right: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  z-index: 100;
+  color: white;
+}
+
+div#stats {
+  height: 500px;
+  width: 200px;
+  position: fixed;
+  bottom: 222px;
+  right: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  z-index: 100;
+  color: white;
+}
+
+div#stats input {
+  color: black;
+}
