@@ -114,14 +114,14 @@ div#stats input {
 .axis path,
 .axis line {
   fill: none;
-  stroke: steelblue;
+  stroke: #CFCFCF;
   shape-rendering: crispEdges;
 }
 .axis text {
-  stroke: steelblue;
-  fill: steelblue;
+  stroke: #CFCFCF;
+  fill: #CFCFCF;
 }
 
 .area {
-  fill: steelblue;
+  fill: #CFCFCF;
 }
