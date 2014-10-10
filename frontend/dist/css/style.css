@@ -110,3 +110,18 @@ div#stats {
 div#stats input {
   color: black;
 }
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: steelblue;
+  shape-rendering: crispEdges;
+}
+.axis text {
+  stroke: steelblue;
+  fill: steelblue;
+}
+
+.area {
+  fill: steelblue;
+}
