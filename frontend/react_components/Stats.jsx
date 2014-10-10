@@ -153,7 +153,6 @@ exports.Stats = React.createClass({
     var currentIndex = this.props.currentIndex;
     var speed = this.props.track.speed(currentIndex);
     var elevation = this.props.track.elevation(currentIndex);
-    console.log(minElevation, maxElevation, elevation);
     return (
       <div id="stats" className={this.state.show ? '': 'hide'}>
         <Gauge min={0} max={this.props.track.maxSpeed()} current={speed} unit={'km/h'}/>
