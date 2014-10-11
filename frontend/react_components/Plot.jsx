@@ -33,12 +33,17 @@ exports.Plot = React.createClass({
       .y0(height)
       .y1(function(d) { return y(d.ele); });
 
+
     var svg = d3.select(holder).append("svg")
       .attr("width", width + margin.left + margin.right)
       .attr("height", height + margin.top + margin.bottom)
     .append("g")
       .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
+    var chart = svg.append("path")
+      .datum([])
+      .attr("class", "area")
+      .attr("d", area);
     // Make this variables available for render()
     this.plot = {
       height: height,
@@ -47,28 +52,29 @@ exports.Plot = React.createClass({
       y: y,
       xAxis: xAxis,
       yAxis: yAxis,
-      area: area
+      area: area,
+      chart: chart
     };
   },
   render: function() {
 
     if (this.props.track) {
       // Remove previous plot
-      this.plot.svg.selectAll("*").remove();
+      this.plot.svg.selectAll("g").remove();
       // Draw current plot
       this.plot.x.domain(d3.extent(this.props.track.trackpoints, function(d) { return d.time; }))
       this.plot.y.domain([this.props.track.minElevation(), this.props.track.maxElevation()]);
 
-      this.plot.svg.append("path")
+      this.plot.chart
         .datum(this.props.track.trackpoints)
-        .attr("class", "area")
+        .transition()
+        .duration(750)
         .attr("d", this.plot.area);
 
       this.plot.svg.append("g")
         .attr("class", "x axis")
         .attr("transform", "translate(0," + this.plot.height + ")")
         .call(this.plot.xAxis);
-
       this.plot.svg.append("g")
         .attr("class", "y axis")
         .call(this.plot.yAxis)
