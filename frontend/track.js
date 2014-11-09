@@ -6,6 +6,17 @@ var $ = require('jquery');
 var _ = require('lodash');
 
 
+//////////////////////
+// PUBLIC INTERFACE //
+//////////////////////
+exports.Trackpoint = Trackpoint;
+exports.Track = Track;
+exports.parseTrack = parseTrack;
+
+
+///////////////////////
+// Private functions //
+///////////////////////
 function deg2rad(deg) {
   return deg * (Math.PI/180);
 }
@@ -34,226 +45,223 @@ function linearDistance(lat1, lon1, lat2, lon2) {
   return Math.pow(lat1 - lat2, 2) + Math.pow(lon1 - lon2, 2);
 }
 
-exports.Trackpoint = function(trkptXML) {
-  // trkptXML is a DOM object.
-  var $trkptXML = $(trkptXML);
 
-  var self = {
-    lat: parseFloat($trkptXML.attr('lat')),
-    lon: parseFloat($trkptXML.attr('lon')),
-    ele: parseFloat($trkptXML.find('ele').text()),
-    time: new Date($trkptXML.find('time').text())
-  };
+//////////////////////
+// Public functions //
+//////////////////////
+function Trackpoint(
+  lat,
+  lon,
+  elevation,
+  time,
+  timeElapsed,
+  distance,
+  distanceElapsed,
+  speed,
+  ascended,
+  descended,
+  slope
+) {
+  // Basic trackpoint data
+  this.lat = lat;
+  this.lon = lon;
+  this.elevation = elevation;
+  this.time = time;
+  // Calculated trackpoint data
+  this.timeElapsed = timeElapsed;
+  this.distance = distance;
+  this.distanceElapsed = distanceElapsed;
+  this.speed = speed;
+  this.ascended = ascended;
+  this.descended = descended;
+  this.slope = slope;
+}
 
-  return self;
+
+function Track(name, description, segment) {
+  ////////////////////////////////////
+  // Basic track data is setup here //
+  ////////////////////////////////////
+
+  this.name = name;
+  this.description = description;
+  this.segment = segment;
+
+  ////////////////////////////////
+  // Calculate Track statistics //
+  ////////////////////////////////
+
+  // total distance by the track (m)
+  this.totalDistance = _.reduce(this.segment, function(result, currTrkPt, idx, segment) {
+    var prevTrkPt = idx > 0 ? segment[idx - 1] : currTrkPt;
+    return result + harvesineDistance(currTrkPt, prevTrkPt);
+  }, 0);
+  // total time elapsed (ms)
+  this.totalTime = _.reduce(this.segment, function(result, currTrkPt, idx, segment) {
+    var prevTrkPt = idx > 0 ? segment[idx - 1] : currTrkPt;
+    var timeDiff = currTrkPt.time.getTime() - prevTrkPt.time.getTime();
+    return result + timeDiff;
+  }, 0);
+  // total moving time (ms)
+  this.movingTime = _.reduce(this.segment, function(result, currTrkPt, idx, segment) {
+    var prevTrkPt = idx > 0 ? segment[idx - 1] : currTrkPt;
+    var timeDiff = currTrkPt.time.getTime() - prevTrkPt.time.getTime();
+    // If we have moved at less than 1km/h, treat as if stopped
+    return self.speed(idx) > 1 ? result + timeDiff : result;
+  }, 0);
+  // total stopped time (ms)
+  this.stillTime =  _.reduce(this.segment, function(result, currTrkPt, idx, segment) {
+    var prevTrkPt = idx > 0 ? segment[idx - 1] : currTrkPt;
+    var timeDiff = currTrkPt.time.getTime() - prevTrkPt.time.getTime();
+    // If we have moved at less than 1km/h, treat as if stopped
+    return self.speed(idx) > 1 ? result : result + timeDiff;
+  }, 0);
+  // Avg speed (km/h)
+  this.avgSpeed = self.totalDistance() / self.totalTime() * 3600;
+  // Max speed (km/h)
+  this.maxSpeed = _.reduce(this.segment, function(result, currTrkPt, idx) {
+    var speed = currTrkPt.speed;
+    return speed > result ? speed : result;
+  }, 0);
+  // accumulative +elevation (m)
+  this.positiveElevation = _.reduce(this.segment, function(posElevation, currTrkPt, idx, segment) {
+    var prevTrkPt = idx > 0 ? segment[idx - 1] : currTrkPt;
+    var elevationDiff = currTrkPt.elevation - prevTrkPt.elevation;
+    posElevation = elevationDiff > 0 ? posElevation + elevationDiff : posElevation;
+    return posElevation;
+  }, 0);
+  // accumulative -elevation (m)
+  this.negativeElevation = _.reduce(this.segment, function(negElevation, currTrkPt, idx, segment) {
+    var prevTrkPt = idx > 0 ? segment[idx - 1] : currTrkPt;
+    var elevationDiff = currTrkPt.elevation - prevTrkPt.elevation;
+    negElevation = elevationDiff < 0 ? negElevation + elevationDiff : negElevation;
+    return negElevation;
+  }, 0.0);
+  // max elevation (m)
+  this.maxElevation = _.max(this.segment, 'elevation').elevation;
+  // min elevation (m)
+  this.minElevation = _.min(this.segment, 'elevation').elevation;
+}
+
+Track.prototype.slice = function(start, end) {
+  var subSegment = this.segment.slice(start, end);
+  return new Track(this.name, this.description, subSegment);
 };
 
-exports.Track = function(gpxXML, name, description, trackpoints) {
-  // This is the public object we will populate with the track data
-  var self = {
-    // Track attributes
-    name: name,
-    description: description,
-    // trackpoints is supposed to be a private member, a la python (not enforced, recommended)
-    trackpoints: trackpoints,
-    // This will store results
-    _memoizer: {},
-    // Track instantaneous accessors
-    time: function(idx) {
-      return self.trackpoints[idx].time;
-    },
-    timeElapsed: function(idx) {
-      // Returns time since start in milliseconds
-      var start = self.trackpoints[0].time.getTime();
-      var end = self.trackpoints[idx].time.getTime();
-      return end - start;
-    },
-    speed: function(idx) {
-      // Instantaneous speed at idx in km/h
-      if (idx === 0) {
-        return 0;
-      }
-      var dist = harvesineDistance(self.trackpoints[idx], self.trackpoints[idx - 1]);
-      var time = (self.trackpoints[idx].time.getTime() - self.trackpoints[idx - 1].time.getTime());
-      // speed = dist / time, as per Newton
-      // measures are in metres/ms. Multiply by 3600 you get km/h
-      return dist / time * 3600;
-    },
-    elevation: function(idx) {
-      return self.trackpoints[idx].ele;
-    },
-    ascended: function(idx) {
-      var clone = self.slice(0, idx);
-      return clone.positiveElevation();
-    },
-    descended: function(idx) {
-      var clone = self.slice(0, idx);
-      return clone.negativeElevation();
-    },
-    slope: function(idx) {
-      if (idx === 0) {
-        return 0;
-      }
-      var difX = harvesineDistance(self.trackpoints[idx], self.trackpoints[idx - 1]);
-      var difY = self.trackpoints[idx].ele - self.trackpoints[idx - 1].ele;
-      // slope. a 45º slope will return 1. <45º => 0, >45º => inf
-      return difY / difX
-    },
-    // Track statistics
-    points : function() {
-      // total number of points in track
-      return self.trackpoints.length;
-    },
-    distance: function() {
-      return _.reduce(self.trackpoints, function(result, currTrkPt, idx, trackpoints) {
-        var prevTrkPt = idx > 0 ? trackpoints[idx - 1] : currTrkPt;
-        return result + harvesineDistance(currTrkPt, prevTrkPt);
-      }, 0);
-    },
-    totalTime: function() {
-      // Return total elapsed time in ms
-      return _.reduce(self.trackpoints, function(result, currTrkPt, idx, trackpoints) {
-        var prevTrkPt = idx > 0 ? trackpoints[idx - 1] : currTrkPt;
-        var timeDiff = currTrkPt.time.getTime() - prevTrkPt.time.getTime();
-        return result + timeDiff;
-      }, 0);
-    },
-    movingTime: function() {
-      return _.reduce(self.trackpoints, function(result, currTrkPt, idx, trackpoints) {
-        var prevTrkPt = idx > 0 ? trackpoints[idx - 1] : currTrkPt;
-        var timeDiff = currTrkPt.time.getTime() - prevTrkPt.time.getTime();
-        // If we have moved at less than 1km/h, treat as if stopped
-        return self.speed(idx) > 1 ? result + timeDiff : result;
-      }, 0);
-    },
-    stillTime: function() {
-      return _.reduce(self.trackpoints, function(result, currTrkPt, idx, trackpoints) {
-        var prevTrkPt = idx > 0 ? trackpoints[idx - 1] : currTrkPt;
-        var timeDiff = currTrkPt.time.getTime() - prevTrkPt.time.getTime();
-        // If we have moved at less than 1km/h, treat as if stopped
-        return self.speed(idx) > 1 ? result : result + timeDiff;
-      }, 0);
-    },
-    avgSpeed: function() {
-      return self.distance() / self.totalTime() * 3600;
-    },
-    maxSpeed: function() {
-      return _.reduce(self.trackpoints, function(result, currTrkPt, idx) {
-        var speed = self.speed(idx);
-        return speed > result ? speed : result;
-      }, 0);
-    },
-    positiveElevation: function() {
-      return _.reduce(self.trackpoints, function(posElevation, currTrkPt, idx, trackpoints) {
-        var prevTrkPt = idx > 0 ? trackpoints[idx - 1] : currTrkPt;
-        var elevationDiff = currTrkPt.ele - prevTrkPt.ele;
-        posElevation = elevationDiff > 0 ? posElevation + elevationDiff : posElevation;
-        return posElevation;
-      }, 0);
-    },
-    negativeElevation: function() {
-      return _.reduce(self.trackpoints, function(negElevation, currTrkPt, idx, trackpoints) {
-        var prevTrkPt = idx > 0 ? trackpoints[idx - 1] : currTrkPt;
-        var elevationDiff = currTrkPt.ele - prevTrkPt.ele;
-        negElevation = elevationDiff < 0 ? negElevation + elevationDiff : negElevation;
-        return negElevation;
-      }, 0.0);
-    },
-    maxElevation: function() {
-      return _.max(self.trackpoints, 'ele').ele;
-    },
-    minElevation: function() {
-      return _.min(self.trackpoints, 'ele').ele;
-    },
-    // Track methods
-    slice: function(start, end) {
-      return exports.Track(
-        '',
-        self.name,
-        self.description,
-        self.trackpoints.slice(start, end)
-      );
-    },
-    nearest: function(lat, lon) {
-      // returns idx to trackpoint closer to coordinates
-      var bestDistance = Number.MAX_VALUE;
-      return _.reduce(self.trackpoints, function(result, currTrkPt, idx) {
-        var distance = linearDistance(currTrkPt.lat, currTrkPt.lon, lat, lon);
-        if (distance < bestDistance) {
-          result = idx;
-          bestDistance = distance;
-          console.log(bestDistance)
-        }
-        return result;
-      });
-    },
-    bounds: function() {
-      // returns an object with the coordinate bounds of the track. Format:
-      // {
-      //   north: +latitude,
-      //   east: +longitude,
-      //   south: -latitude,
-      //   west: -longitude
-      // }
-      return {
-        north: _.max(self.trackpoints, 'lat').lat,
-        east: _.max(self.trackpoints, 'lon').lon,
-        south: _.min(self.trackpoints, 'lat').lat,
-        west: _.min(self.trackpoints, 'lon').lon,
-      }
+Track.prototype.nearest = function(lat, lon) {
+  // returns idx to trackpoint closer to coordinates
+  var bestDistance = Number.MAX_VALUE;
+  return _.reduce(this.segment, function(result, currTrkPt, idx) {
+    var distance = linearDistance(currTrkPt.lat, currTrkPt.lon, lat, lon);
+    if (distance < bestDistance) {
+      result = idx;
+      bestDistance = distance;
     }
-  };
+    return result;
+  });
+};
 
+Track.prototype.bounds = function() {
+  // returns an object with the coordinate bounds of the track. Format:
+  // {
+  //   north: +latitude,
+  //   east: +longitude,
+  //   south: -latitude,
+  //   west: -longitude
+  // }
+  return {
+    north: _.max(this.segment, 'lat').lat,
+    east: _.max(this.segment, 'lon').lon,
+    south: _.min(this.segment, 'lat').lat,
+    west: _.min(this.segment, 'lon').lon,
+  }
+};
+
+// Async fn call. Parses a gpx xml string and calls cb with the results.
+// cb has the blueprint function cb(error, track){}
+function parseTrack(gpxXML, cb) {
   // Check arg types
   if (typeof gpxXML !== 'string') {
-    throw new Error('gpxXML must be a string');
+    return cb(new Error('gpxXML must be a string'));
   }
   if (typeof self.name !== 'string' && typeof self.name !== 'undefined') {
-    throw new Error('name must be a string or nothing');
+    return cb(new Error('name must be a string or nothing'));
   }
   if (typeof self.description !== 'string' && typeof self.description !== 'undefined') {
-    throw new Error('description must be a string or nothing');
+    return cb(new Error('description must be a string or nothing'));
   }
-
   // Start xml parsing
   var $xml = $($.parseXML(gpxXML));
-  self.name = self.name || $xml.find('trk name').text();
-  self.description = self.description || $xml.find('trk desc').text() ||
-    $xml.find('trk cmt').text();
-  var xmlTrackpoints = $xml.find('trk trkseg trkpt');
-  // trackpoints is an immutable array of Trackpoint objects
-  self.trackpoints = self.trackpoints || _.map(xmlTrackpoints, exports.Trackpoint);
+  var name = $xml.find('trk name').text();
+  var description = $xml.find('trk desc').text() || $xml.find('trk cmt').text();
+  var segment = _.map($xml.find('trk trkseg trkpt'), function(trkptXML) {
+    // trkptXML is a DOM object.
+    var $trkptXML = $(trkptXML);
 
-  // equalize filter for elevation
-  var filterWindow = 3;
-  for (var idx = 0; idx < self.trackpoints.length; idx++) {
-    if (idx - filterWindow < 0) {
-      continue;
-    }
-    var normalizedElevation = 0;
-    for (var i = 0; i < filterWindow; i++) {
-      normalizedElevation += self.trackpoints[idx - i].ele;
-    }
-    self.trackpoints[idx].ele = normalizedElevation / filterWindow;
-  }
-  // Memoize stats functions calls
-  _.forEach(self, function(property, key) {
-    var memoizer = function() {
-      self._memoizer[key] = self._memoizer[key] || {};
-      var result = self._memoizer[key][arguments[0]]
-      if (result !== undefined) {
-        return result;
-      } else {
-        result = property.apply(null, arguments);
-        self._memoizer[key][arguments[0]] = result;
-        return result;
-      }
-    }
-    if (!_.isFunction(property) || key === 'slice' || key === 'nearest') {
-      return;
-    }
-    self[key] = memoizer;
+    var lat = parseFloat($trkptXML.attr('lat'));
+    var lon = parseFloat($trkptXML.attr('lon'));
+    var ele = parseFloat($trkptXML.find('ele').text());
+    var time = new Date($trkptXML.find('time').text());
+
+    return new Trackpoint(lat, lon, ele, time);
   });
-  // return the public object
-  return self;
-};
+
+  // calculate timeElapsed
+  _.reduce(segment, function(result, trackpoint, idx, segment) {
+    var oldTrackpoint = (idx - 1) >= 0 ? segment[idx - 1] : segment[0];
+    var diff = trackpoint.time.getTime() - oldTrackpoint.time.getTime();
+    result += diff;
+    trackpoint.timeElapsed = result;
+    return result;
+  }, 0);
+  // calculate distance
+  _.forEach(segment, function(trackpoint, idx, segment) {
+    var oldTrackpoint = (idx - 1) >= 0 ? segment[idx - 1] : segment[0];
+    var distance = harvesineDistance(trackpoint, oldTrackpoint);
+    trackpoint.distance = distance;
+  });
+  // calculate distanceElapsed
+  _.reduce(segment, function(result, trackpoint, idx, segment) {
+    result += trackpoint.distance;
+    trackpoint.distanceElapsed = result;
+    return result;
+  }, 0);
+  // calculate speed
+  _.forEach(segment, function(trackpoint, idx, segment) {
+    var oldTrackpoint = (idx - 1) >= 0 ? segment[idx - 1] : segment[0];
+    var diffTime = trackpoint.time.getTime() - oldTrackpoint.time.getTime();
+    // speed = dist / time, as per Newton
+    // measures are in metres/ms. Multiply by 3600 you get km/h
+    return trackpoint.distance / diffTime * 3600;
+  });
+  // calculate ascended
+  _.reduce(segment, function(result, trackpoint, idx, segment) {
+    var oldTrackpoint = (idx - 1) >= 0 ? segment[idx - 1] : segment[0];
+    var diff = trackpoint.elevation - oldTrackpoint.elevation;
+    var diffAscend = diff > 0 ? diff : 0;
+    result += diffAscend;
+    trackpoint.ascended = result;
+    return result;
+  }, 0);
+  // calculate descended
+  _.reduce(segment, function(result, trackpoint, idx, segment) {
+    var oldTrackpoint = (idx - 1) >= 0 ? segment[idx - 1] : segment[0];
+    var diff = trackpoint.elevation - oldTrackpoint.elevation;
+    var diffDescend = diff < 0 ? -diff : 0;
+    result += diffDescend;
+    trackpoint.descended = result;
+    return result;
+  }, 0);
+  // calculate slope
+  _.forEach(segment, function(trackpoint, idx, segment) {
+    var oldTrackpoint = (idx - 1) >= 0 ? segment[idx - 1] : segment[0];
+    var difX = trackpoint.distance;
+    var difY = trackpoint.elevation - oldTrackpoint.elevation;
+    // slope. a 45º slope will return 1. <45º => 0, >45º => inf
+    return difY / difX
+  });
+
+  // Now that we have all data assembled, construct a new track object
+  var track = new Track(name, description, segment);
+  return cb(null, track);
+}
