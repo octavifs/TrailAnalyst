@@ -208,7 +208,7 @@ function parseTrack(gpxXML, cb) {
 
   // calculate timeElapsed
   _.reduce(segment, function(result, trackpoint, idx, segment) {
-    var oldTrackpoint = (idx - 1) >= 0 ? segment[idx - 1] : segment[0];
+    var oldTrackpoint = idx > 0 ? segment[idx - 1] : trackpoint;
     var diff = trackpoint.time.getTime() - oldTrackpoint.time.getTime();
     result += diff;
     trackpoint.timeElapsed = result;
@@ -216,7 +216,7 @@ function parseTrack(gpxXML, cb) {
   }, 0);
   // calculate distance
   _.forEach(segment, function(trackpoint, idx, segment) {
-    var oldTrackpoint = (idx - 1) >= 0 ? segment[idx - 1] : segment[0];
+    var oldTrackpoint = idx > 0 ? segment[idx - 1] : trackpoint;
     var distance = harvesineDistance(trackpoint, oldTrackpoint);
     trackpoint.distance = distance;
   });
@@ -228,7 +228,7 @@ function parseTrack(gpxXML, cb) {
   }, 0);
   // calculate speed
   _.forEach(segment, function(trackpoint, idx, segment) {
-    var oldTrackpoint = (idx - 1) >= 0 ? segment[idx - 1] : segment[0];
+    var oldTrackpoint = idx > 0 ? segment[idx - 1] : trackpoint;
     var diffTime = trackpoint.time.getTime() - oldTrackpoint.time.getTime();
     // speed = dist / time, as per Newton
     // measures are in metres/ms. Multiply by 3600 you get km/h
@@ -236,7 +236,7 @@ function parseTrack(gpxXML, cb) {
   });
   // calculate ascended
   _.reduce(segment, function(result, trackpoint, idx, segment) {
-    var oldTrackpoint = (idx - 1) >= 0 ? segment[idx - 1] : segment[0];
+    var oldTrackpoint = idx > 0 ? segment[idx - 1] : trackpoint;
     var diff = trackpoint.elevation - oldTrackpoint.elevation;
     var diffAscend = diff > 0 ? diff : 0;
     result += diffAscend;
@@ -245,7 +245,7 @@ function parseTrack(gpxXML, cb) {
   }, 0);
   // calculate descended
   _.reduce(segment, function(result, trackpoint, idx, segment) {
-    var oldTrackpoint = (idx - 1) >= 0 ? segment[idx - 1] : segment[0];
+    var oldTrackpoint = idx > 0 ? segment[idx - 1] : trackpoint;
     var diff = trackpoint.elevation - oldTrackpoint.elevation;
     var diffDescend = diff < 0 ? -diff : 0;
     result += diffDescend;
@@ -254,7 +254,7 @@ function parseTrack(gpxXML, cb) {
   }, 0);
   // calculate slope
   _.forEach(segment, function(trackpoint, idx, segment) {
-    var oldTrackpoint = (idx - 1) >= 0 ? segment[idx - 1] : segment[0];
+    var oldTrackpoint = idx > 0 ? segment[idx - 1] : trackpoint;
     var difX = trackpoint.distance;
     var difY = trackpoint.elevation - oldTrackpoint.elevation;
     // slope. a 45º slope will return 1. <45º => 0, >45º => inf
