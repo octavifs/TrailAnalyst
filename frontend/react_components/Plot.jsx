@@ -29,9 +29,9 @@ exports.Plot = React.createClass({
       .orient("left");
 
     var area = d3.svg.area()
-      .x(function(d) { return x(d.time); })
+      .x(function(d) { return x(d.distanceElapsed); })
       .y0(height)
-      .y1(function(d) { return y(d.ele); });
+      .y1(function(d) { return y(d.elevation); });
 
 
     var svg = d3.select(holder).append("svg")
@@ -62,11 +62,11 @@ exports.Plot = React.createClass({
       // Remove previous plot
       this.plot.svg.selectAll("g").remove();
       // Draw current plot
-      this.plot.x.domain(d3.extent(this.props.track.trackpoints, function(d) { return d.time; }))
-      this.plot.y.domain([this.props.track.minElevation(), this.props.track.maxElevation()]);
+      this.plot.x.domain([0, this.props.track.totalDistance]);
+      this.plot.y.domain([this.props.track.minElevation, this.props.track.maxElevation]);
 
       this.plot.chart
-        .datum(this.props.track.trackpoints)
+        .datum(this.props.track.segment)
         .transition()
         .duration(750)
         .attr("d", this.plot.area);

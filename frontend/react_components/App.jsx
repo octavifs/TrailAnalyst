@@ -5,7 +5,7 @@ var Router = require('react-router');
 var Routes = Router.Routes;
 var Route = Router.Route;
 var DefaultRoute = Router.DefaultRoute;
-var Track = require('../track.js').Track;
+var parseTrack = require('../track.js').parseTrack;
 
 var Map = require('./Map.jsx').Map;
 var Stats = require('./Stats.jsx').Stats;
@@ -51,7 +51,17 @@ var App = React.createClass({
     var reader = new FileReader();
     // prepare handler for when reading has finished
     reader.onload = function(e) {
-      this.setState({track: Track(e.target.result)});
+      var self = this;
+      parseTrack(e.target.result, function(err, track) {
+        if (err) {
+          console.log(err);
+        } else {
+          self.setState({
+            track: track,
+            currentIndex: 0
+          });
+        }
+      });
     }.bind(this)
     // start reading file in async task
     reader.readAsText(file);

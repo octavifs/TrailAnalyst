@@ -107,17 +107,17 @@ function Track(name, description, segment) {
     var prevTrkPt = idx > 0 ? segment[idx - 1] : currTrkPt;
     var timeDiff = currTrkPt.time.getTime() - prevTrkPt.time.getTime();
     // If we have moved at less than 1km/h, treat as if stopped
-    return self.speed(idx) > 1 ? result + timeDiff : result;
+    return currTrkPt.speed > 1 ? result + timeDiff : result;
   }, 0);
   // total stopped time (ms)
   this.stillTime =  _.reduce(this.segment, function(result, currTrkPt, idx, segment) {
     var prevTrkPt = idx > 0 ? segment[idx - 1] : currTrkPt;
     var timeDiff = currTrkPt.time.getTime() - prevTrkPt.time.getTime();
     // If we have moved at less than 1km/h, treat as if stopped
-    return self.speed(idx) > 1 ? result : result + timeDiff;
+    return currTrkPt.speed > 1 ? result : result + timeDiff;
   }, 0);
   // Avg speed (km/h)
-  this.avgSpeed = self.totalDistance() / self.totalTime() * 3600;
+  this.avgSpeed = this.totalDistance / this.totalTime * 3600;
   // Max speed (km/h)
   this.maxSpeed = _.reduce(this.segment, function(result, currTrkPt, idx) {
     var speed = currTrkPt.speed;
@@ -207,7 +207,7 @@ function parseTrack(gpxXML, cb) {
   });
 
   // calculate timeElapsed
-  _.reduce(segment, function(result, trackpoint, idx, segment) {
+  _.reduce(segment, function(result, trackpoint, idx) {
     var oldTrackpoint = idx > 0 ? segment[idx - 1] : trackpoint;
     var diff = trackpoint.time.getTime() - oldTrackpoint.time.getTime();
     result += diff;
@@ -215,27 +215,27 @@ function parseTrack(gpxXML, cb) {
     return result;
   }, 0);
   // calculate distance
-  _.forEach(segment, function(trackpoint, idx, segment) {
+  _.forEach(segment, function(trackpoint, idx) {
     var oldTrackpoint = idx > 0 ? segment[idx - 1] : trackpoint;
     var distance = harvesineDistance(trackpoint, oldTrackpoint);
     trackpoint.distance = distance;
   });
   // calculate distanceElapsed
-  _.reduce(segment, function(result, trackpoint, idx, segment) {
+  _.reduce(segment, function(result, trackpoint, idx) {
     result += trackpoint.distance;
     trackpoint.distanceElapsed = result;
     return result;
   }, 0);
   // calculate speed
-  _.forEach(segment, function(trackpoint, idx, segment) {
+  _.forEach(segment, function(trackpoint, idx) {
     var oldTrackpoint = idx > 0 ? segment[idx - 1] : trackpoint;
-    var diffTime = trackpoint.time.getTime() - oldTrackpoint.time.getTime();
+    var diffTime = (trackpoint.time.getTime() - oldTrackpoint.time.getTime()) || 1;
     // speed = dist / time, as per Newton
     // measures are in metres/ms. Multiply by 3600 you get km/h
-    return trackpoint.distance / diffTime * 3600;
+    trackpoint.speed = trackpoint.distance / diffTime * 3600;
   });
   // calculate ascended
-  _.reduce(segment, function(result, trackpoint, idx, segment) {
+  _.reduce(segment, function(result, trackpoint, idx) {
     var oldTrackpoint = idx > 0 ? segment[idx - 1] : trackpoint;
     var diff = trackpoint.elevation - oldTrackpoint.elevation;
     var diffAscend = diff > 0 ? diff : 0;
@@ -244,7 +244,7 @@ function parseTrack(gpxXML, cb) {
     return result;
   }, 0);
   // calculate descended
-  _.reduce(segment, function(result, trackpoint, idx, segment) {
+  _.reduce(segment, function(result, trackpoint, idx) {
     var oldTrackpoint = idx > 0 ? segment[idx - 1] : trackpoint;
     var diff = trackpoint.elevation - oldTrackpoint.elevation;
     var diffDescend = diff < 0 ? -diff : 0;
@@ -253,12 +253,12 @@ function parseTrack(gpxXML, cb) {
     return result;
   }, 0);
   // calculate slope
-  _.forEach(segment, function(trackpoint, idx, segment) {
+  _.forEach(segment, function(trackpoint, idx) {
     var oldTrackpoint = idx > 0 ? segment[idx - 1] : trackpoint;
     var difX = trackpoint.distance;
     var difY = trackpoint.elevation - oldTrackpoint.elevation;
     // slope. a 45º slope will return 1. <45º => 0, >45º => inf
-    return difY / difX
+    trackpoint.slope = difY / difX
   });
 
   // Now that we have all data assembled, construct a new track object

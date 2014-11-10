@@ -139,24 +139,24 @@ exports.Stats = React.createClass({
       );
     }
     // Global measurements
-    var distance = numeral(this.props.track.distance() / 1000).format('0.00') + 'km'
-    var totalTime = numeral(this.props.track.totalTime() / 1000).format('00:00:00') + ' h'
-    var movingTime = numeral(this.props.track.movingTime() / 1000).format('00:00:00') + ' h'
-    var stillTime = numeral(this.props.track.stillTime() / 1000).format('00:00:00') + ' h'
-    var avgSpeed = numeral(this.props.track.avgSpeed()).format('0.00') + ' km/h'
-    var maxSpeed = numeral(this.props.track.maxSpeed()).format('0.00') + ' km/h'
-    var positiveElevation = numeral(this.props.track.positiveElevation()).format('0') + ' m'
-    var negativeElevation = numeral(this.props.track.negativeElevation()).format('0') + ' m'
-    var maxElevation = numeral(this.props.track.maxElevation()).format('0') + ' m'
-    var minElevation = numeral(this.props.track.minElevation()).format('0') + ' m'
+    var distance = numeral(this.props.track.totalDistance / 1000).format('0.00') + 'km'
+    var totalTime = numeral(this.props.track.totalTime / 1000).format('00:00:00') + ' h'
+    var movingTime = numeral(this.props.track.movingTime / 1000).format('00:00:00') + ' h'
+    var stillTime = numeral(this.props.track.stillTime / 1000).format('00:00:00') + ' h'
+    var avgSpeed = numeral(this.props.track.avgSpeed).format('0.00') + ' km/h'
+    var maxSpeed = numeral(this.props.track.maxSpeed).format('0.00') + ' km/h'
+    var positiveElevation = numeral(this.props.track.positiveElevation).format('0') + ' m'
+    var negativeElevation = numeral(this.props.track.negativeElevation).format('0') + ' m'
+    var maxElevation = numeral(this.props.track.maxElevation).format('0') + ' m'
+    var minElevation = numeral(this.props.track.minElevation).format('0') + ' m'
     // Instantaneous measurements
     var currentIndex = this.props.currentIndex;
-    var speed = this.props.track.speed(currentIndex);
-    var elevation = this.props.track.elevation(currentIndex);
+    var speed = this.props.track.segment[currentIndex].speed;
+    var elevation = this.props.track.segment[currentIndex].elevation;
     return (
       <div id="stats" className={this.state.show ? '': 'hide'}>
-        <Gauge min={0} max={this.props.track.maxSpeed()} current={speed} unit={'km/h'}/>
-        <Gauge min={this.props.track.minElevation()} max={this.props.track.maxElevation()} current={elevation} unit={'m'}/>
+        <Gauge min={0} max={this.props.track.maxSpeed} current={speed} unit={'km/h'}/>
+        <Gauge min={this.props.track.minElevation} max={this.props.track.maxElevation} current={elevation} unit={'m'}/>
         <ul>
           <li>Distance: {distance}</li>
           <li>Total time: {totalTime}</li>

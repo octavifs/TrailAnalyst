@@ -18,11 +18,11 @@ exports.Map = React.createClass({
     var colorMax = "hsl(360, 50%, 50%)";
     var min, max;
     if (this.props.metric === 'elevation') {
-      min = this.props.track.minElevation();
-      max = this.props.track.maxElevation();
+      min = this.props.track.minElevation;
+      max = this.props.track.maxElevation;
     } else {
       min = 0;
-      max = this.props.track.maxSpeed();
+      max = this.props.track.maxSpeed;
     }
     return d3.interpolateHsl(colorMin, colorMax)(
       d3.scale.linear()
@@ -83,7 +83,7 @@ exports.Map = React.createClass({
       });
       this.state.trackPolylines = [];
       // Redraw polylines
-      var trackCoords = this.props.track.trackpoints.map(function(trackpoint) {
+      var trackCoords = this.props.track.segment.map(function(trackpoint) {
         return new google.maps.LatLng(trackpoint.lat, trackpoint.lon);
       });
       var segments = trackCoords.slice(1).map(function(coords, idx) {
@@ -92,7 +92,7 @@ exports.Map = React.createClass({
       segments.forEach(function(segment, idx) {
         var trackPolyline = new google.maps.Polyline({
           path: segment,
-          strokeColor: this.scaleColor(this.props.track[this.props.metric](idx + 1)),
+          strokeColor: this.scaleColor(this.props.track.segment[idx + 1][this.props.metric]),
           strokeOpacity: 0.8,
           strokeWeight: 6,
           map: this.state.map
