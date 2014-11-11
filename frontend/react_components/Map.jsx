@@ -8,6 +8,7 @@ exports.Map = React.createClass({
       map: null,
       trackPolylines: [],
       track: null,
+      currentIndex: 0,
     };
   },
   scaleColor: function(value) {
@@ -71,8 +72,29 @@ exports.Map = React.createClass({
     };
     map.setOptions(mapOptions);
     this.setState({map: map});
+    // Set current mark
+    var currentMark = new google.maps.Circle({
+      center: new google.maps.LatLng(0, 0),
+      visible: false,
+      clickable: false,
+      strokeWeight: 8,
+      strokeOpacity: 0.8,
+      zIndex: 1000,
+      map: map,
+      radius: 50
+    });
+    this.setState({currentMark: currentMark});
   },
   render: function() {
+    if (this.props.currentIndex !== this.state.currentIndex) {
+      this.state.currentIndex = this.props.currentIndex;
+      var trackpoint = this.props.track.segment[this.props.currentIndex];
+      this.state.currentMark.setOptions({
+        center: new google.maps.LatLng(trackpoint.lat, trackpoint.lon),
+        visible: true,
+        strokeColor: this.scaleColor(trackpoint[this.props.metric]),
+      });
+    }
     // If a new track is available, display it
     if (this.props.track !== this.state.track) {
       // Brute force update of track state. No rerender
