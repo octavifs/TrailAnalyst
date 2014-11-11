@@ -125,3 +125,7 @@ div#stats input {
 .area {
   fill: #CFCFCF;
 }
+
+.negative-area {
+  fill: red;
+}

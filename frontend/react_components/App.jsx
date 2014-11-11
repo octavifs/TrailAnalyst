@@ -82,9 +82,9 @@ var App = React.createClass({
       <div onDragOver={this.onDragOverHandler} onDragEnter={this.onDragEnterHandler} onDragLeave={this.onDragEndHandler} onDrop={this.onDropHandler}>
         <Navbar/>
         <div id="content">
-          <Map track={this.state.track} metric={this.state.metric} onTrack={this.onTrackHandler}/>
+          <Map track={this.state.track} metric={this.state.metric} onTrack={this.onTrackHandler} currentIndex={this.state.currentIndex}/>
           <Stats track={this.state.track} metric={this.state.metric} currentIndex={this.state.currentIndex}/>
-          <Plot track={this.state.track} metric={this.state.metric} currentIndex={this.state.currentIndex}/>
+          <Plot track={this.state.track} metric={this.state.metric} onTrack={this.onTrackHandler} currentIndex={this.state.currentIndex}/>
         </div>
       </div>
     );
